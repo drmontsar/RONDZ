@@ -55,3 +55,4 @@ This application is perfectly suited for zero-config deployments. Since all data
 - Add your Google AdSense scripts to the placeholder divs inside `components.js`.
 - Connect your newsletter button triggers to your preferred Mailing provider form endpoint (e.g. Mailchimp).
 # RONDZ
+# RONDZ

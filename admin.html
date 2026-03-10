@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rounds — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+
+  <!-- ── LOGIN SCREEN ─────────────────────────────────────── -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">Rounds</div>
+      <div class="login-sub">admin panel · off-label tech</div>
+      <form id="login-form">
+        <label class="login-label" for="login-password">Password</label>
+        <input class="login-input" type="password" id="login-password" placeholder="Enter admin password"
+          autocomplete="current-password" />
+        <button class="login-btn" type="submit">Sign In →</button>
+        <p class="login-error" id="login-error"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── ADMIN APP ─────────────────────────────────────────── -->
+  <div id="admin-app" style="flex-direction:column;">
+
+    <!-- Nav -->
+    <nav class="admin-nav">
+      <div>
+        <div class="admin-nav-logo">
+          Rounds
+          <span>admin panel</span>
+        </div>
+      </div>
+      <div class="admin-nav-right">
+        <a href="index.html" class="admin-view-site" target="_blank">← View Site</a>
+        <button class="admin-logout-btn" id="btn-logout">Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- Layout -->
+    <div class="admin-layout">
+
+      <!-- Sidebar -->
+      <aside class="admin-sidebar">
+        <div class="admin-sidebar-section">
+          <span class="admin-sidebar-label">Content</span>
+          <button class="admin-nav-item" data-nav="articles">
+            <span class="nav-icon">📄</span> All Articles
+          </button>
+          <button class="admin-nav-item" data-nav="new">
+            <span class="nav-icon">✏️</span> New Article
+          </button>
+        </div>
+        <div class="admin-sidebar-section">
+          <span class="admin-sidebar-label">Manage</span>
+          <button class="admin-nav-item" data-nav="settings">
+            <span class="nav-icon">⚙️</span> Settings
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="admin-main">
+
+        <!-- ── ARTICLES LIST ──────────────────────────────── -->
+        <div class="admin-page" id="page-articles">
+          <div class="admin-page-header">
+            <h1 class="admin-page-title">Articles</h1>
+            <button class="btn-primary" id="btn-new-article">+ New Article</button>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Articles</div>
+              <div class="stat-value" id="stat-total">—</div>
+              <div class="stat-sub">Published</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Your Articles</div>
+              <div class="stat-value" id="stat-user">—</div>
+              <div class="stat-sub">User-created</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Categories</div>
+              <div class="stat-value" id="stat-categories">—</div>
+              <div class="stat-sub">Active topics</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Subscribers</div>
+              <div class="stat-value" id="stat-emails">—</div>
+              <div class="stat-sub">Newsletter signups</div>
+            </div>
+          </div>
+
+          <div class="articles-table-wrap">
+            <table class="articles-table">
+              <thead>
+                <tr>
+                  <th>Article</th>
+                  <th>Category</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="articles-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── NEW / EDIT ARTICLE ─────────────────────────── -->
+        <div class="admin-page" id="page-new">
+          <div class="admin-page-header">
+            <h1 class="admin-page-title">Write Article</h1>
+            <button class="btn-secondary" id="btn-cancel-form">← Back to Articles</button>
+          </div>
+
+          <form class="article-form" id="article-form" onsubmit="return false;">
+
+            <!-- Row 1: Title -->
+            <div class="form-group form-group--full" style="margin-bottom:1.25rem;">
+              <label class="form-label" for="form-title">Title <span class="form-required">*</span></label>
+              <input class="form-input" type="text" id="form-title" placeholder="A compelling, specific headline..." />
+            </div>
+
+            <!-- Row 2: Author, Author Title, Category -->
+            <div class="form-grid form-grid--3">
+              <div class="form-group">
+                <label class="form-label" for="form-author">Author Name <span class="form-required">*</span></label>
+                <input class="form-input" type="text" id="form-author" placeholder="Dr. Jane Smith" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="form-author-title">Author Title</label>
+                <input class="form-input" type="text" id="form-author-title" placeholder="Cardiology, Mayo Clinic" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="form-category">Category <span class="form-required">*</span></label>
+                <select class="form-select" id="form-category">
+                  <option value="">Select category...</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 3: Date, Read Time, Featured -->
+            <div class="form-grid form-grid--3" style="margin-top:1.25rem;">
+              <div class="form-group">
+                <label class="form-label" for="form-date">Publish Date</label>
+                <input class="form-input" type="date" id="form-date" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="form-readtime">Read Time</label>
+                <input class="form-input" type="text" id="form-readtime" placeholder="7 min read" />
+              </div>
+              <div class="form-group" style="justify-content:flex-end;">
+                <label class="form-label">Options</label>
+                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;">
+                  <input type="checkbox" id="form-featured" style="accent-color:var(--teal)" />
+                  Set as Featured Article
+                </label>
+              </div>
+            </div>
+
+            <!-- Row 4: Summary -->
+            <div class="form-group form-group--full" style="margin-top:1.25rem;">
+              <label class="form-label" for="form-summary">Summary / Deck</label>
+              <textarea class="form-textarea" id="form-summary" rows="3"
+                placeholder="A 1-2 sentence hook that appears on article cards and in SEO descriptions..."></textarea>
+            </div>
+
+            <!-- Row 5: Cover Image -->
+            <div class="form-group form-group--full" style="margin-top:1.25rem;">
+              <label class="form-label">Cover Image</label>
+              <div class="image-upload-area" id="image-upload-area">
+                <img class="image-preview" id="image-preview" alt="Preview" />
+                <div class="image-upload-placeholder" id="upload-placeholder">
+                  <div class="upload-icon">🖼</div>
+                  <p>Click to upload or drag & drop</p>
+                  <small>JPG, PNG, GIF · Or paste a URL below</small>
+                </div>
+              </div>
+              <input type="file" id="image-file-input" accept="image/*" />
+              <div class="image-url-input">
+                <input class="form-input" type="url" id="form-image" placeholder="Or paste an image URL: https://..." />
+              </div>
+            </div>
+
+            <!-- Row 6: Body -->
+            <div class="form-group form-group--full" style="margin-top:1.25rem;">
+              <label class="form-label">Article Body <span class="form-required">*</span></label>
+              <div class="editor-wrap">
+                <div class="editor-toolbar">
+                  <button type="button" class="editor-btn" onclick="execCmd('bold')" title="Bold"><b>B</b></button>
+                  <button type="button" class="editor-btn" onclick="execCmd('italic')" title="Italic"><i>I</i></button>
+                  <button type="button" class="editor-btn" onclick="execCmd('underline')"
+                    title="Underline"><u>U</u></button>
+                  <div class="editor-separator"></div>
+                  <button type="button" class="editor-btn" onclick="insertHeading()" title="Heading">H2</button>
+                  <div class="editor-separator"></div>
+                  <button type="button" class="editor-btn" onclick="execCmd('insertUnorderedList')"
+                    title="Bullet List">• List</button>
+                  <button type="button" class="editor-btn" onclick="execCmd('insertOrderedList')"
+                    title="Numbered List">1. List</button>
+                  <div class="editor-separator"></div>
+                  <button type="button" class="editor-btn" onclick="insertLink()" title="Insert Link">🔗 Link</button>
+                  <button type="button" class="editor-btn" onclick="execCmd('formatBlock', 'blockquote')"
+                    title="Blockquote">❝ Quote</button>
+                  <div class="editor-separator"></div>
+                  <button type="button" class="editor-btn" onclick="execCmd('removeFormat')" title="Clear Formatting"
+                    style="color:var(--muted)">✕ Clear</button>
+                </div>
+                <div class="editor-content" id="editor-content" contenteditable="true" spellcheck="true"></div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+              <button type="submit" class="btn-primary" id="form-submit-btn">Publish Article</button>
+              <button type="button" class="btn-secondary" id="btn-cancel-form-2"
+                onclick="document.getElementById('btn-cancel-form').click()">Cancel</button>
+              <button type="button" class="btn-secondary" id="btn-delete-article"
+                style="display:none; border-color:var(--red); color:var(--red);">Delete Article</button>
+              <span class="form-success" id="form-success">✓ Article saved! Redirecting...</span>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- ── SETTINGS ──────────────────────────────────── -->
+        <div class="admin-page" id="page-settings">
+          <div class="admin-page-header">
+            <h1 class="admin-page-title">Settings</h1>
+          </div>
+
+          <div class="settings-section">
+            <h3 class="settings-section-title">Change Admin Password</h3>
+            <form id="password-form">
+              <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">Current Password</label>
+                <input class="form-input" type="password" id="current-password" placeholder="Current password" />
+              </div>
+              <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">New Password</label>
+                <input class="form-input" type="password" id="new-password" placeholder="New password (min 6 chars)" />
+              </div>
+              <div class="form-group" style="margin-bottom:1.5rem;">
+                <label class="form-label">Confirm New Password</label>
+                <input class="form-input" type="password" id="confirm-password" placeholder="Confirm new password" />
+              </div>
+              <button type="submit" class="btn-primary">Update Password</button>
+            </form>
+          </div>
+
+          <div class="settings-section">
+            <h3 class="settings-section-title">Newsletter Subscribers</h3>
+            <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.6;">
+              Emails collected from the newsletter signup forms. Export as CSV to import into Mailchimp, ConvertKit, or
+              any email platform.
+            </p>
+            <button class="btn-primary" id="btn-export-emails">⬇ Export Subscribers CSV</button>
+          </div>
+
+          <div class="settings-section">
+            <h3 class="settings-section-title">Data Management</h3>
+            <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.6;">
+              Danger zone. These actions cannot be undone. Seed articles are never deleted — only your published
+              articles.
+            </p>
+            <button class="btn-secondary" id="btn-clear-articles" style="border-color:var(--red);color:var(--red);">
+              🗑 Delete All User Articles
+            </button>
+          </div>
+
+          <div class="settings-section">
+            <h3 class="settings-section-title">Go Live Checklist</h3>
+            <div style="font-size:0.85rem;line-height:2;color:var(--text);">
+              <div>☐ Register a domain (roundsmd.com, therounds.doctor, etc.)</div>
+              <div>☐ Host on Netlify, Vercel, or GitHub Pages (free)</div>
+              <div>☐ Add Google AdSense — replace <code
+                  style="background:var(--cream);padding:0.1rem 0.3rem;border-radius:3px;">ad-placeholder</code> divs in
+                components.js</div>
+              <div>☐ Connect newsletter to Mailchimp / ConvertKit via their embed form</div>
+              <div>☐ Add Google Analytics tracking snippet to index.html &lt;head&gt;</div>
+              <div>☐ Replace seed articles with your own real content</div>
+              <div>☐ Add a custom favicon</div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/admin.js"></script>
+
+</body>
+
+</html>
