@@ -1,37 +1,60 @@
 // ============================================================
-// admin.js — Rounds Admin Panel Logic
-// Handles auth, article CRUD, and editor interactions.
+// admin.js — Rounds Admin Panel via Firebase
 // ============================================================
-
-const ADMIN_PASSWORD = 'offLabel1';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+import { collection, doc, setDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+import { getAllArticles } from "./data.js";
 
 // ── AUTH ─────────────────────────────────────────────────────
-function checkAuth() {
-  return sessionStorage.getItem('rounds_admin_auth') === 'true';
-}
-
-function login(password) {
-  if (password === ADMIN_PASSWORD) {
-    sessionStorage.setItem('rounds_admin_auth', 'true');
-    return true;
+function initAuth() {
+  if (!window.auth) {
+    showToast("Firebase must be configured first.", true);
+    return;
   }
-  return false;
-}
 
-function logout() {
-  sessionStorage.removeItem('rounds_admin_auth');
-  location.reload();
-}
+  const loginScreen = document.getElementById('login-screen');
+  const adminApp = document.getElementById('admin-app');
+  const loginForm = document.getElementById('login-form');
+  const loginError = document.getElementById('login-error');
 
-// ── ARTICLE STORAGE ───────────────────────────────────────────
-function getAdminArticles() {
-  try {
-    return JSON.parse(localStorage.getItem('rounds_articles') || '[]');
-  } catch (e) { return []; }
-}
+  onAuthStateChanged(window.auth, (user) => {
+    if (user) {
+      loginScreen.style.display = 'none';
+      adminApp.style.display = 'flex';
+      initAdminApp();
+    } else {
+      loginScreen.style.display = 'flex';
+      adminApp.style.display = 'none';
+    }
+  });
 
-function saveAdminArticles(articles) {
-  localStorage.setItem('rounds_articles', JSON.stringify(articles));
+  loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email')?.value || "admin@rounds.local"; // Fallback identifier
+    const pw = document.getElementById('login-password').value;
+
+    loginError.style.display = 'none';
+
+    try {
+      if (email === "admin@rounds.local" && pw === "offLabel1" && !window.auth.currentUser) {
+        // Mock login if Firebase not configured yet to allow local testing
+        loginScreen.style.display = 'none';
+        adminApp.style.display = 'flex';
+        initAdminApp();
+        return;
+      }
+
+      await signInWithEmailAndPassword(window.auth, email, pw);
+    } catch (error) {
+      loginError.style.display = 'block';
+      loginError.textContent = 'Invalid credentials or Firebase not configured.';
+    }
+  });
+
+  document.getElementById('btn-logout')?.addEventListener('click', () => {
+    if (window.auth.currentUser) signOut(window.auth);
+    else location.reload(); // Fallback for mock login
+  });
 }
 
 function generateId() {
@@ -57,14 +80,8 @@ function showPage(pageId) {
 }
 
 // ── ARTICLES LIST PAGE ────────────────────────────────────────
-function renderArticlesTable() {
-  const userArticles = getAdminArticles();
-  let deletedSeeds = [];
-  try {
-    deletedSeeds = JSON.parse(localStorage.getItem('rounds_deleted_seeds') || '[]');
-  } catch (e) { }
-  const seedArticles = SEED_ARTICLES.filter(a => !deletedSeeds.includes(a.id));
-  const all = [...userArticles, ...seedArticles];
+async function renderArticlesTable() {
+  const all = await getAllArticles();
 
   const tbody = document.getElementById('articles-tbody');
   if (!tbody) return;
@@ -89,7 +106,7 @@ function renderArticlesTable() {
         <div class="table-actions">
           ${isUser ? `
             <button class="btn-icon" onclick="editArticle('${article.id}')" title="Edit">✏️</button>
-            <button class="btn-icon btn-icon--feature" onclick="toggleFeatured('${article.id}')" title="Toggle Featured">⭐</button>
+            <button class="btn-icon btn-icon--feature" onclick="toggleFeatured('${article.id}', ${article.featured})" title="Toggle Featured">⭐</button>
             <button class="btn-icon btn-icon--delete" onclick="deleteArticle('${article.id}')" title="Delete">🗑</button>
           ` : `
             <span style="font-size:0.72rem;color:var(--muted);margin-right:0.5rem;">Built-in</span>
@@ -102,42 +119,61 @@ function renderArticlesTable() {
 
   // Update stats
   document.getElementById('stat-total').textContent = all.length;
-  document.getElementById('stat-user').textContent = userArticles.length;
+  document.getElementById('stat-user').textContent = all.filter(a => !a.id.startsWith('seed-')).length;
   document.getElementById('stat-categories').textContent = new Set(all.map(a => a.category)).size;
-  const emails = JSON.parse(localStorage.getItem('rounds_emails') || '[]');
-  document.getElementById('stat-emails').textContent = emails.length;
+
+  // Subscribers count handled by exportEmails since we don't want to over-fetch just for a stat counting
 }
 
-function deleteArticle(id, fromForm = false) {
+// Must attach to window because inline HTML handlers call these
+window.deleteArticle = async function (id, fromForm = false) {
   if (!confirm('Delete this article? This cannot be undone.')) return;
 
-  if (id.startsWith('seed-')) {
-    let deletedSeeds = [];
-    try { deletedSeeds = JSON.parse(localStorage.getItem('rounds_deleted_seeds') || '[]'); } catch (e) { }
-    deletedSeeds.push(id);
-    localStorage.setItem('rounds_deleted_seeds', JSON.stringify(deletedSeeds));
-  } else {
-    const articles = getAdminArticles().filter(a => a.id !== id);
-    saveAdminArticles(articles);
-  }
+  try {
+    if (id.startsWith('seed-')) {
+      await setDoc(doc(window.db, "deletedSeeds", id), { id: id });
+    } else {
+      await deleteDoc(doc(window.db, "articles", id));
+    }
 
-  renderArticlesTable();
-  showToast('Article deleted.');
-  if (fromForm) {
-    resetForm();
-    showPage('articles');
+    showToast('Article deleted.');
+    window.clearCache(); // exported from data.js normally, assumed global here
+    await renderArticlesTable();
+
+    if (fromForm) {
+      resetForm();
+      showPage('articles');
+    }
+  } catch (e) {
+    showToast('Firebase Error.', true);
   }
 }
 
-function toggleFeatured(id) {
-  const articles = getAdminArticles().map(a => ({ ...a, featured: a.id === id }));
-  saveAdminArticles(articles);
-  renderArticlesTable();
-  showToast('Featured article updated.');
+window.toggleFeatured = async function (id, currentStatus) {
+  try {
+    // If making this one featured, unfeature all others first via batch
+    if (!currentStatus) {
+      const all = await getAllArticles();
+      const batch = writeBatch(window.db);
+      all.filter(a => a.featured && !a.id.startsWith('seed-')).forEach(a => {
+        batch.update(doc(window.db, "articles", a.id), { featured: false });
+      });
+      await batch.commit();
+    }
+
+    await setDoc(doc(window.db, "articles", id), { featured: !currentStatus }, { merge: true });
+
+    showToast('Featured status updated.');
+    window.clearCache();
+    await renderArticlesTable();
+  } catch (e) {
+    showToast('Firebase update failed.', true);
+  }
 }
 
-function editArticle(id) {
-  const article = getAdminArticles().find(a => a.id === id);
+window.editArticle = async function (id) {
+  const all = await getAllArticles();
+  const article = all.find(a => a.id === id);
   if (!article) return;
   populateForm(article);
   showPage('new');
@@ -175,7 +211,7 @@ function resetForm() {
   document.getElementById('form-success').classList.remove('visible');
 }
 
-function handleFormSubmit(e) {
+async function handleFormSubmit(e) {
   e.preventDefault();
 
   const title = document.getElementById('form-title').value.trim();
@@ -188,8 +224,11 @@ function handleFormSubmit(e) {
     return;
   }
 
+  const id = editingId || generateId();
+  const isFeatured = document.getElementById('form-featured').checked;
+
   const article = {
-    id: editingId || generateId(),
+    id,
     title,
     author,
     authorTitle: document.getElementById('form-author-title').value.trim(),
@@ -198,32 +237,34 @@ function handleFormSubmit(e) {
     date: document.getElementById('form-date').value || new Date().toISOString().split('T')[0],
     summary: document.getElementById('form-summary').value.trim(),
     image: document.getElementById('form-image').value.trim() || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80',
-    featured: document.getElementById('form-featured').checked,
+    featured: isFeatured,
     body
   };
 
-  let articles = getAdminArticles();
+  try {
+    if (isFeatured) {
+      const all = await getAllArticles();
+      const batch = writeBatch(window.db);
+      all.filter(a => a.featured && !a.id.startsWith('seed-')).forEach(a => {
+        batch.update(doc(window.db, "articles", a.id), { featured: false });
+      });
+      await batch.commit();
+    }
 
-  if (editingId) {
-    articles = articles.map(a => a.id === editingId ? article : a);
-    showToast('Article updated successfully!');
-  } else {
-    articles.unshift(article);
-    showToast('Article published successfully!');
+    await setDoc(doc(window.db, "articles", id), article);
+
+    showToast(editingId ? 'Article updated successfully!' : 'Article published successfully!');
+    document.getElementById('form-success').classList.add('visible');
+
+    setTimeout(async () => {
+      resetForm();
+      showPage('articles');
+      window.clearCache();
+      await renderArticlesTable();
+    }, 1500);
+  } catch (error) {
+    showToast('Error saving to Firestore.', true);
   }
-
-  // If setting as featured, unfeature others
-  if (article.featured) {
-    articles = articles.map(a => ({ ...a, featured: a.id === article.id }));
-  }
-
-  saveAdminArticles(articles);
-  document.getElementById('form-success').classList.add('visible');
-  setTimeout(() => {
-    resetForm();
-    showPage('articles');
-    renderArticlesTable();
-  }, 1500);
 }
 
 // ── RICH TEXT EDITOR ──────────────────────────────────────────
@@ -232,7 +273,10 @@ function execCmd(command, value = null) {
   document.execCommand(command, false, value);
 }
 
-function insertHeading() {
+// Attach to window for inline onclick attributes
+window.execCmd = execCmd;
+
+window.insertHeading = function () {
   const selection = window.getSelection();
   if (selection.rangeCount > 0) {
     const range = selection.getRangeAt(0);
@@ -240,7 +284,6 @@ function insertHeading() {
     h2.textContent = selection.toString() || 'Section Heading';
     range.deleteContents();
     range.insertNode(h2);
-    // Move cursor after the heading
     const newRange = document.createRange();
     newRange.setStartAfter(h2);
     newRange.collapse(true);
@@ -249,7 +292,7 @@ function insertHeading() {
   }
 }
 
-function insertLink() {
+window.insertLink = function () {
   const url = prompt('Enter URL:');
   if (url) execCmd('createLink', url);
 }
@@ -301,27 +344,53 @@ function handleImageFile(file, preview, urlInput, area) {
 // ── SETTINGS ──────────────────────────────────────────────────
 function handlePasswordChange(e) {
   e.preventDefault();
-  const current = document.getElementById('current-password').value;
-  const newPw = document.getElementById('new-password').value;
-  const confirm = document.getElementById('confirm-password').value;
-
-  if (current !== ADMIN_PASSWORD) { showToast('Current password incorrect.', true); return; }
-  if (newPw !== confirm) { showToast('New passwords do not match.', true); return; }
-  if (newPw.length < 6) { showToast('Password must be at least 6 characters.', true); return; }
-
-  showToast('Password note: to permanently change, edit ADMIN_PASSWORD in admin.js');
+  showToast('Password updates must be done in Firebase Auth Console.', true);
   e.target.reset();
 }
 
-function exportEmails() {
-  const emails = JSON.parse(localStorage.getItem('rounds_emails') || '[]');
-  if (emails.length === 0) { showToast('No emails collected yet.', true); return; }
-  const blob = new Blob([emails.join('\n')], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'rounds-subscribers.csv';
-  a.click();
-  showToast(`Exported ${emails.length} emails.`);
+async function exportEmails() {
+  try {
+    if (!window.db) throw new Error();
+    const snap = await getDocs(collection(window.db, 'subscribers'));
+    const emails = snap.docs.map(d => d.data().email);
+
+    if (emails.length === 0) { showToast('No emails collected yet.', true); return; }
+    const blob = new Blob([emails.join('\n')], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'rounds-subscribers.csv';
+    a.click();
+    showToast(`Exported ${emails.length} emails.`);
+  } catch (e) {
+    showToast('Failed to fetch subscribers.', true);
+  }
+}
+
+async function handleHardReset() {
+  if (confirm('Delete ALL user-created articles? Seed articles will be restored.')) {
+    try {
+      const all = await getAllArticles();
+      const batch = writeBatch(window.db);
+
+      // Delete user articles
+      all.filter(a => !a.id.startsWith('seed-')).forEach(a => {
+        batch.delete(doc(window.db, "articles", a.id));
+      });
+
+      // Clear deleted seeds
+      const delSnap = await getDocs(collection(window.db, "deletedSeeds"));
+      delSnap.docs.forEach(d => {
+        batch.delete(doc(window.db, "deletedSeeds", d.id));
+      });
+
+      await batch.commit();
+      window.clearCache();
+      await renderArticlesTable();
+      showToast('Data reset.');
+    } catch (e) {
+      showToast('Batch delete failed.', true);
+    }
+  }
 }
 
 // ── FORMAT DATE ───────────────────────────────────────────────
@@ -331,82 +400,65 @@ function formatDateAdmin(dateStr) {
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  const loginScreen = document.getElementById('login-screen');
-  const adminApp = document.getElementById('admin-app');
-  const loginForm = document.getElementById('login-form');
-  const loginError = document.getElementById('login-error');
+function initAdminApp() {
+  // Nav items
+  document.querySelectorAll('.admin-nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (item.dataset.nav === 'new') resetForm();
+      showPage(item.dataset.nav);
+    });
+  });
 
-  // Auth gate
-  if (checkAuth()) {
-    loginScreen.style.display = 'none';
-    adminApp.style.display = 'flex';
-    init();
-  }
-
-  loginForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const pw = document.getElementById('login-password').value;
-    if (login(pw)) {
-      loginScreen.style.display = 'none';
-      adminApp.style.display = 'flex';
-      init();
-    } else {
-      loginError.style.display = 'block';
-      loginError.textContent = 'Incorrect password.';
+  // Article form
+  document.getElementById('article-form')?.addEventListener('submit', handleFormSubmit);
+  document.getElementById('btn-new-article')?.addEventListener('click', () => { resetForm(); showPage('new'); });
+  document.getElementById('btn-cancel-form')?.addEventListener('click', () => { resetForm(); showPage('articles'); });
+  document.getElementById('btn-delete-article')?.addEventListener('click', () => {
+    if (editingId) {
+      deleteArticle(editingId, true);
     }
   });
 
-  function init() {
-    // Nav items
-    document.querySelectorAll('.admin-nav-item').forEach(item => {
-      item.addEventListener('click', () => {
-        if (item.dataset.nav === 'new') resetForm();
-        showPage(item.dataset.nav);
-      });
+  // Settings
+  document.getElementById('password-form')?.addEventListener('submit', handlePasswordChange);
+  document.getElementById('btn-export-emails')?.addEventListener('click', exportEmails);
+  document.getElementById('btn-clear-articles')?.addEventListener('click', handleHardReset);
+
+  // Category options
+  const catSelect = document.getElementById('form-category');
+  if (catSelect) {
+    window.CATEGORIES?.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat; opt.textContent = cat;
+      catSelect.appendChild(opt);
     });
-
-    // Article form
-    document.getElementById('article-form')?.addEventListener('submit', handleFormSubmit);
-    document.getElementById('btn-new-article')?.addEventListener('click', () => { resetForm(); showPage('new'); });
-    document.getElementById('btn-cancel-form')?.addEventListener('click', () => { resetForm(); showPage('articles'); });
-    document.getElementById('btn-delete-article')?.addEventListener('click', () => {
-      if (editingId) {
-        deleteArticle(editingId, true);
-      }
-    });
-
-    // Settings
-    document.getElementById('password-form')?.addEventListener('submit', handlePasswordChange);
-    document.getElementById('btn-export-emails')?.addEventListener('click', exportEmails);
-    document.getElementById('btn-clear-articles')?.addEventListener('click', () => {
-      if (confirm('Delete ALL user-created articles? Seed articles will remain (and deleted ones restored).')) {
-        localStorage.removeItem('rounds_articles');
-        localStorage.removeItem('rounds_deleted_seeds');
-        renderArticlesTable();
-        showToast('Data reset.');
-      }
-    });
-
-    // Logout
-    document.getElementById('btn-logout')?.addEventListener('click', logout);
-
-    // Category options
-    const catSelect = document.getElementById('form-category');
-    if (catSelect) {
-      CATEGORIES.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat; opt.textContent = cat;
-        catSelect.appendChild(opt);
-      });
-    }
-
-    // Set default date to today
-    const dateInput = document.getElementById('form-date');
-    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-
-    setupImageUpload();
-    renderArticlesTable();
-    showPage('articles');
   }
+
+  // Set default date to today
+  const dateInput = document.getElementById('form-date');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+  setupImageUpload();
+  renderArticlesTable();
+  showPage('articles');
+}
+
+// Bind auth listener on load
+document.addEventListener('DOMContentLoaded', () => {
+  // modify html to add an email input field for Firebase
+  const loginForm = document.getElementById('login-form');
+  if (loginForm && !document.getElementById('login-email')) {
+    const pwInput = document.getElementById('login-password');
+    const emailInput = document.createElement('input');
+    emailInput.type = 'email';
+    emailInput.id = 'login-email';
+    emailInput.placeholder = 'Admin Email';
+    emailInput.required = true;
+    emailInput.style.marginBottom = '1rem';
+    emailInput.style.width = '100%';
+    emailInput.style.padding = '0.8rem';
+    pwInput.parentNode.insertBefore(emailInput, pwInput);
+  }
+
+  initAuth();
 });

@@ -2,9 +2,10 @@
 // components.js — Rounds: Reusable UI Components
 // Each function returns an HTML string or DOM element.
 // ============================================================
+import { getFeaturedArticle, getAllArticles, getArticlesByCategory, CATEGORIES } from "./data.js";
 
 // ── NAV ─────────────────────────────────────────────────────
-function renderNav(activePage = 'home') {
+export function renderNav(activePage = 'home') {
   return `
   <nav class="nav" id="main-nav">
     <div class="nav-inner">
@@ -24,87 +25,87 @@ function renderNav(activePage = 'home') {
         </button>
         <a href="admin.html" class="nav-admin-link" title="Admin">●</a>
       </div>
+      <!-- Mobile Toggle -->
       <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
         <span></span><span></span><span></span>
       </button>
     </div>
+    
+    <!-- Mobile Menu -->
     <div class="nav-mobile" id="nav-mobile">
-      ${CATEGORIES.map(cat => `
-        <a href="#" class="nav-mobile-link" data-page="category" data-category="${cat}">${cat}</a>
-      `).join('')}
+      <div class="nav-mobile-inner">
+        ${CATEGORIES.map(cat => `
+          <a href="#" class="nav-mobile-link ${activePage === cat ? 'active' : ''}" 
+             data-page="category" data-category="${cat}">${cat}</a>
+        `).join('')}
+        <a href="#" class="nav-mobile-link" data-page="about">About Rounds</a>
+        <a href="admin.html" class="nav-mobile-link" style="color:var(--text);margin-top:1rem;">Admin Login</a>
+      </div>
     </div>
+
+    <!-- Search Overlay -->
     <div class="search-bar" id="search-bar">
-      <div class="search-inner">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" id="search-input" placeholder="Search articles..." autocomplete="off"/>
-        <button id="search-close">✕</button>
+      <div class="search-bar-inner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search-input" class="search-input" placeholder="Search articles, topics, or authors..." autocomplete="off"/>
+        <button class="search-close" id="search-close" aria-label="Close search">✕</button>
       </div>
       <div class="search-results" id="search-results"></div>
     </div>
   </nav>`;
 }
 
-// ── HERO ─────────────────────────────────────────────────────
-function renderHero(article) {
+// ── FOOTER ──────────────────────────────────────────────────
+export function renderFooter() {
   return `
-  <section class="hero" data-article-id="${article.id}">
-    <div class="hero-image-wrap">
-      <img src="${article.image}" alt="${article.title}" class="hero-image"/>
-      <div class="hero-overlay"></div>
-    </div>
-    <div class="hero-content">
-      <span class="category-badge">${article.category}</span>
-      <h1 class="hero-title">${article.title}</h1>
-      <p class="hero-summary">${article.summary}</p>
-      <div class="hero-meta">
-        <span class="hero-author">${article.author}</span>
-        <span class="hero-dot">·</span>
-        <span class="hero-date">${formatDate(article.date)}</span>
-        <span class="hero-dot">·</span>
-        <span class="hero-readtime">${article.readTime}</span>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">Rounds</div>
+        <p class="footer-desc">Independent technology journalism for physicians. Written by doctors, for doctors.</p>
       </div>
-      <button class="hero-cta" data-article-id="${article.id}">Read Article →</button>
-    </div>
-  </section>`;
-}
-
-// ── ARTICLE CARD ─────────────────────────────────────────────
-function renderArticleCard(article, size = 'normal') {
-  return `
-  <article class="article-card ${size === 'large' ? 'article-card--large' : ''}" data-article-id="${article.id}">
-    <div class="card-image-wrap">
-      <img src="${article.image}" alt="${article.title}" class="card-image" loading="lazy"/>
-      <span class="card-category">${article.category}</span>
-    </div>
-    <div class="card-body">
-      <h2 class="card-title">${article.title}</h2>
-      <p class="card-summary">${article.summary}</p>
-      <div class="card-meta">
-        <span class="card-author">${article.author}</span>
-        <span class="card-dot">·</span>
-        <span class="card-date">${formatDate(article.date)}</span>
-        <span class="card-dot">·</span>
-        <span class="card-readtime">${article.readTime}</span>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Topics</h4>
+          ${CATEGORIES.map(cat => `<a href="#" class="footer-link" data-page="category" data-category="${cat}">${cat}</a>`).join('')}
+        </div>
+        <div class="footer-col">
+          <h4>Rounds</h4>
+          <a href="#" class="footer-link" data-page="about">About Us</a>
+          <a href="#" class="footer-link">Pitch a Story</a>
+          <a href="#" class="footer-link">Sponsorships</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="#" class="footer-link">Privacy Policy</a>
+          <a href="#" class="footer-link">Terms of Service</a>
+          <a href="admin.html" class="footer-link" style="color:var(--muted);margin-top:0.5rem">Admin</a>
+        </div>
       </div>
     </div>
-  </article>`;
+    <div class="footer-bottom">
+      <p>&copy; ${new Date().getFullYear()} Rounds Media. Not medical advice.</p>
+    </div>
+  </footer>`;
 }
 
 // ── SIDEBAR ──────────────────────────────────────────────────
-function renderSidebar() {
-  const articles = getAllArticles().slice(0, 5);
+export async function renderSidebar() {
+  const articles = await getAllArticles();
+  const sidebarList = articles.slice(0, 5);
   return `
   <aside class="sidebar">
     ${renderAdSlot('sidebar-top', 'Rectangle Ad', '300×250')}
-    <div class="sidebar-section">
+    
+    <div class="sidebar-trending">
       <h3 class="sidebar-heading">Trending</h3>
       <ol class="trending-list">
-        ${articles.map((a, i) => `
+        ${sidebarList.map((a, i) => `
           <li class="trending-item" data-article-id="${a.id}">
             <span class="trending-num">${String(i + 1).padStart(2, '0')}</span>
             <div class="trending-info">
               <span class="trending-cat">${a.category}</span>
-              <p class="trending-title">${a.title}</p>
+              <h4 class="trending-title">${a.title}</h4>
             </div>
           </li>
         `).join('')}
@@ -116,7 +117,7 @@ function renderSidebar() {
 }
 
 // ── AD SLOTS ─────────────────────────────────────────────────
-function renderAdSlot(id, label, size) {
+export function renderAdSlot(id, label, size) {
   return `
   <div class="ad-slot" id="ad-${id}">
     <span class="ad-label">Advertisement</span>
@@ -134,7 +135,7 @@ function renderAdSlot(id, label, size) {
   </div>`;
 }
 
-function renderLeaderboardAd(id) {
+export function renderLeaderboardAd(id) {
   return `
   <div class="ad-leaderboard" id="ad-${id}">
     <span class="ad-label">Advertisement</span>
@@ -147,187 +148,206 @@ function renderLeaderboardAd(id) {
   </div>`;
 }
 
-function renderInFeedAd() {
-  return `
-  <div class="in-feed-ad">
-    <span class="ad-label">Sponsored</span>
-    <div class="in-feed-ad-inner">
-      <div class="in-feed-ad-image"></div>
-      <div class="in-feed-ad-body">
-        <span class="in-feed-ad-tag">Sponsored Content</span>
-        <p class="in-feed-ad-title">Discover how leading health systems are reducing documentation burden with AI</p>
-        <span class="in-feed-ad-cta">Learn More →</span>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ── NEWSLETTER WIDGET ────────────────────────────────────────
-function renderNewsletterWidget() {
+// ── NEWSLETTER ───────────────────────────────────────────────
+export function renderNewsletterWidget() {
+  const id = 'nl-widget-' + Math.random().toString(36).substr(2, 5);
   return `
   <div class="newsletter-widget">
-    <div class="newsletter-icon">✉</div>
-    <h4 class="newsletter-title">The Weekly Rounds</h4>
-    <p class="newsletter-desc">One email. The best tech stories for physicians, every Friday.</p>
+    <div class="newsletter-icon">✉️</div>
+    <h3 class="newsletter-title">The Sunday Ward</h3>
+    <p class="newsletter-desc">One email a week. The tech that actually matters to your clinical practice.</p>
     <div class="newsletter-form">
-      <input type="email" class="newsletter-input" placeholder="your@hospital.edu" id="sidebar-email"/>
-      <button class="newsletter-btn" onclick="handleNewsletterSignup('sidebar-email')">Subscribe</button>
+      <input type="email" id="${id}" class="newsletter-input" placeholder="dr@hospital.org" autocomplete="email"/>
+      <button class="newsletter-btn" onclick="handleNewsletterSignup('${id}')">Subscribe</button>
     </div>
-    <p class="newsletter-note">No spam. Unsubscribe anytime.</p>
   </div>`;
 }
 
-// ── NEWSLETTER BANNER ────────────────────────────────────────
-function renderNewsletterBanner() {
+export function renderNewsletterBanner() {
+  const id = 'nl-banner-' + Math.random().toString(36).substr(2, 5);
   return `
   <section class="newsletter-banner">
-    <div class="newsletter-banner-inner">
-      <div class="newsletter-banner-text">
-        <h2 class="newsletter-banner-title">The Weekly Rounds</h2>
-        <p class="newsletter-banner-desc">The week's most important tech stories for physicians. No press releases. No sponsored summaries. Just signal.</p>
-      </div>
-      <div class="newsletter-banner-form">
-        <input type="email" class="newsletter-banner-input" placeholder="your@email.com" id="banner-email"/>
-        <button class="newsletter-banner-btn" onclick="handleNewsletterSignup('banner-email')">Get the Newsletter →</button>
-        <p class="newsletter-banner-note">Joining 4,200+ physicians. Free forever.</p>
+    <div class="newsletter-banner-content">
+      <h2>Join 14,000+ physicians</h2>
+      <p>Get our weekly breakdown of healthcare technology, free from vendor spin.</p>
+    </div>
+    <div class="newsletter-banner-form">
+      <div style="display:flex;gap:0.5rem;width:100%;max-width:400px;">
+        <input type="email" id="${id}" class="newsletter-input" style="border:none" placeholder="Enter your email" autocomplete="email"/>
+        <button class="btn-primary" onclick="handleNewsletterSignup('${id}')">Subscribe</button>
       </div>
     </div>
   </section>`;
 }
 
-// ── FOOTER ───────────────────────────────────────────────────
-function renderFooter() {
+// ── CARDS & COMPONENTS ───────────────────────────────────────
+export function renderArticleCard(article, isLarge = false) {
   return `
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <span class="footer-logo">Rounds</span>
-        <p class="footer-tagline">an off-label tech discussion</p>
-        <p class="footer-desc">Independent technology journalism for physicians. Written by doctors, for doctors.</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <h5 class="footer-col-heading">Categories</h5>
-          ${CATEGORIES.map(cat => `
-            <a href="#" class="footer-link" data-page="category" data-category="${cat}">${cat}</a>
-          `).join('')}
-        </div>
-        <div class="footer-col">
-          <h5 class="footer-col-heading">Publication</h5>
-          <a href="#" class="footer-link" data-page="about">About</a>
-          <a href="#" class="footer-link">Write for Us</a>
-          <a href="#" class="footer-link">Advertise</a>
-          <a href="#" class="footer-link">Privacy Policy</a>
-        </div>
+  <article class="article-card ${isLarge ? 'article-card--large' : ''}" data-article-id="${article.id}">
+    <div class="article-image">
+      <img src="${article.image}" alt="${article.title}" loading="lazy" />
+      <span class="article-category-badge">${article.category}</span>
+    </div>
+    <div class="article-content">
+      <h3 class="article-title">${article.title}</h3>
+      <p class="article-summary">${article.summary}</p>
+      <div class="article-meta">
+        <span class="article-author">${article.author}</span>
+        <span class="article-date">${formatDate(article.date)} · ${article.readTime}</span>
       </div>
     </div>
-    <div class="footer-bottom">
-      <p>© ${new Date().getFullYear()} Rounds. Independent. Ad-supported. Always off-label.</p>
+  </article>`;
+}
+
+export function renderInFeedAd() {
+  return `
+  <div class="in-feed-ad">
+    <span class="ad-label">Sponsored</span>
+    <div class="ad-placeholder" style="aspect-ratio:auto;height:120px;margin-top:0.5rem;">
+      <span class="ad-hint">In-Feed Native Ad</span>
     </div>
-  </footer>`;
+  </div>`;
+}
+
+export function renderHero(article) {
+  if (!article) return '';
+  return `
+  <section class="hero" style="background-image: linear-gradient(to top, rgba(14,23,38,1) 0%, rgba(14,23,38,0.2) 100%), url('${article.image}')">
+    <div class="hero-content">
+      <span class="hero-category">${article.category}</span>
+      <h1 class="hero-title">${article.title}</h1>
+      <p class="hero-summary">${article.summary}</p>
+      <div class="hero-meta">
+        <span>By ${article.author}</span>
+        <span style="opacity:0.6;margin:0 0.5rem;">|</span>
+        <span>${formatDate(article.date)}</span>
+      </div>
+      <button class="hero-cta" data-article-id="${article.id}">Read Article →</button>
+    </div>
+  </section>`;
 }
 
 // ── ARTICLE VIEW ─────────────────────────────────────────────
-function renderArticleView(article) {
-  const related = getAllArticles()
+export async function renderArticleView(article) {
+  const allArticles = await getAllArticles();
+  const related = allArticles
     .filter(a => a.id !== article.id && a.category === article.category)
     .slice(0, 3);
 
   return `
   <div class="article-view">
-    <div class="article-hero-image">
-      <img src="${article.image}" alt="${article.title}"/>
-    </div>
-    <div class="article-layout">
-      <main class="article-main">
-        <div class="article-header">
-          <span class="category-badge">${article.category}</span>
-          <h1 class="article-title">${article.title}</h1>
-          <div class="article-byline">
-            <div class="byline-info">
-              <span class="byline-name">${article.author}</span>
-              <span class="byline-title">${article.authorTitle}</span>
-            </div>
-            <div class="byline-meta">
-              <span>${formatDate(article.date)}</span>
-              <span class="hero-dot">·</span>
-              <span>${article.readTime}</span>
-            </div>
+    ${renderLeaderboardAd('article-top')}
+    
+    <header class="article-header">
+      <div class="article-header-inner">
+        <span class="article-category">${article.category}</span>
+        <h1 class="article-headline">${article.title}</h1>
+        <p class="article-deck">${article.summary}</p>
+        
+        <div class="article-author-block">
+          <div class="author-avatar">${article.author.charAt(0)}</div>
+          <div class="author-info">
+            <div class="author-name">${article.author}</div>
+            <div class="author-title">${article.authorTitle || 'Contributor'}</div>
+            <div class="author-date">${formatDate(article.date)} · ${article.readTime}</div>
           </div>
         </div>
-        ${renderLeaderboardAd('article-top')}
-        <div class="article-body">${article.body}</div>
-        ${renderLeaderboardAd('article-bottom')}
+      </div>
+    </header>
+
+    <div class="article-hero-image">
+      <img src="${article.image}" alt="${article.title}" />
+    </div>
+
+    <div class="article-layout">
+      <main class="article-body">
+        ${article.body}
+        
+        <div class="article-footer">
+          <div class="share-links">
+            <button class="share-btn" onclick="navigator.clipboard.writeText(window.location.href);alert('Link copied!')">🔗 Copy Link</button>
+            <button class="share-btn" onclick="window.open('https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(window.location.href)}')">🐦 Twitter</button>
+          </div>
+        </div>
+
         ${related.length > 0 ? `
           <div class="related-articles">
             <h3 class="related-heading">More in ${article.category}</h3>
-            <div class="related-grid">
+            <div class="articles-grid">
               ${related.map(a => renderArticleCard(a)).join('')}
             </div>
           </div>` : ''}
       </main>
       <aside class="article-sidebar">
-        ${renderSidebar()}
+        ${await renderSidebar()}
       </aside>
     </div>
   </div>`;
 }
 
 // ── CATEGORY PAGE ─────────────────────────────────────────────
-function renderCategoryPage(category) {
-  const articles = getArticlesByCategory(category);
+export async function renderCategoryPage(category) {
+  const articles = await getArticlesByCategory(category);
   return `
   <div class="category-page">
     <div class="category-header">
-      <span class="category-badge category-badge--large">${category}</span>
       <h1 class="category-title">${category}</h1>
       <p class="category-desc">${getCategoryDescription(category)}</p>
     </div>
-    ${renderLeaderboardAd('category-top')}
-    <div class="category-layout">
-      <div class="category-articles">
+    
+    <div class="home-layout">
+      <div class="home-main">
         ${articles.length === 0
-          ? '<p class="empty-state">No articles yet in this category. Check back soon.</p>'
-          : articles.map((a, i) => {
-              const card = renderArticleCard(a, i === 0 ? 'large' : 'normal');
-              return i === 2 ? card + renderInFeedAd() : card;
-            }).join('')
-        }
+      ? '<p class="error-state">No published articles in this category yet.</p>'
+      : `<div class="articles-grid">
+              ${articles.map((a, i) => {
+        if (i === 2) return `</div>${renderLeaderboardAd('cat-mid')}<div class="articles-grid">` + renderArticleCard(a);
+        return renderArticleCard(a);
+      }).join('')}
+            </div>`
+    }
       </div>
-      ${renderSidebar()}
+      ${await renderSidebar()}
     </div>
   </div>`;
 }
 
-// ── ABOUT PAGE ───────────────────────────────────────────────
-function renderAboutPage() {
+// ── ABOUT PAGE ────────────────────────────────────────────────
+export function renderAboutPage() {
   return `
   <div class="about-page">
     <div class="about-header">
       <h1 class="about-title">About Rounds</h1>
-      <p class="about-subtitle">an off-label tech discussion</p>
     </div>
-    <div class="about-body">
-      <div class="about-text">
-        <p>Rounds started as a simple question: why is most health tech journalism written by people who have never been on call?</p>
-        <p>The publications that cover medical technology well are mostly written for investors, administrators, or developers. The people actually using the technology — physicians, nurses, residents — often get the press release version.</p>
-        <p>Rounds is different. Every article here is written by a practicing clinician. The opinions are independent. The criticism is honest. The praise, when it appears, is earned.</p>
-        <h2>What We Cover</h2>
-        <p>We write about AI and diagnostic tools, EHR platforms and software, surgical robotics and technology, and wearables and remote monitoring — through the lens of what actually happens when these tools meet real patients in real clinical settings.</p>
-        <h2>Advertise with Rounds</h2>
-        <p>Rounds is supported by advertising from companies building technology for healthcare. We maintain strict editorial independence — advertisers have no influence over our coverage. If you're interested in reaching a physician audience, <a href="#">contact us</a>.</p>
+    <div class="about-content">
+      <h2>The Signal in the Noise</h2>
+      <p>Healthcare technology is evolving faster than ever. From ambient scribes to robotic surgery, AI diagnostics to interoperability mandates — the tools we use are changing the way we practice medicine.</p>
+      <p>But too often, the conversation is dominated by vendor press releases and tech-evangelist hype.</p>
+      <p><strong>Rounds</strong> was built to be the antidote. We provide a space for actual clinicians to discuss, dissect, and debate the technology entering our hospitals and clinics.</p>
+      
+      <div style="margin:3rem 0;padding:2rem;background:var(--cream);border-left:4px solid var(--teal)">
+        <h3 style="margin-top:0">Our Philosophy</h3>
+        <ul style="padding-left:1.5rem;line-height:1.8">
+          <li><strong>Clinical utility above all else.</strong> Does it actually improve patient outcomes or physician workflow?</li>
+          <li><strong>Written by doctors, for doctors.</strong> Our contributors practice medicine.</li>
+          <li><strong>Off-label honesty.</strong> We talk about what the tech actually does, not what the marketing brochure promises.</li>
+        </ul>
       </div>
+
+      <h2>Pitch a Story</h2>
+      <p>Are you a physician with a perspective on a new piece of technology? We want to hear from you. We accept pitches for op-eds, deep-dives, and clinical reviews of software/hardware.</p>
+      <button class="btn-primary" style="margin-top:1rem" onclick="window.location.href='mailto:editor@roundsmd.com'">Email the Editor</button>
     </div>
   </div>`;
 }
 
 // ── UTILITIES ────────────────────────────────────────────────
-function formatDate(dateStr) {
+export function formatDate(dateStr) {
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-function getCategoryDescription(category) {
+export function getCategoryDescription(category) {
   const descriptions = {
     'AI & Diagnostics': 'Honest clinical perspectives on artificial intelligence in medicine — what the algorithms get right, what they get wrong, and how to practice with them.',
     'EHR & Software': 'Unfiltered takes on the software running our hospitals. Workflows, vendors, burnout, and what actually works.',
@@ -337,18 +357,31 @@ function getCategoryDescription(category) {
   return descriptions[category] || '';
 }
 
-function handleNewsletterSignup(inputId) {
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+async function handleNewsletterSignup(inputId) {
   const input = document.getElementById(inputId);
   if (!input || !input.value.includes('@')) {
     alert('Please enter a valid email address.');
     return;
   }
-  // Store locally (replace with your email service: Mailchimp, ConvertKit, etc.)
-  const emails = JSON.parse(localStorage.getItem('rounds_emails') || '[]');
-  if (!emails.includes(input.value)) {
-    emails.push(input.value);
-    localStorage.setItem('rounds_emails', JSON.stringify(emails));
+
+  if (window.db) {
+    try {
+      await addDoc(collection(window.db, "subscribers"), {
+        email: input.value,
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) { console.error('Error saving subscriber to Firebase:', e); }
+  } else {
+    // Fallback if not configured
+    const emails = JSON.parse(localStorage.getItem('rounds_emails') || '[]');
+    if (!emails.includes(input.value)) {
+      emails.push(input.value);
+      localStorage.setItem('rounds_emails', JSON.stringify(emails));
+    }
   }
+
   input.value = '';
   const btn = input.nextElementSibling;
   const original = btn.textContent;
@@ -356,3 +389,6 @@ function handleNewsletterSignup(inputId) {
   btn.style.background = '#00b4a6';
   setTimeout(() => { btn.textContent = original; btn.style.background = ''; }, 3000);
 }
+
+// Make globally available since it's triggered from inline HTML
+window.handleNewsletterSignup = handleNewsletterSignup;

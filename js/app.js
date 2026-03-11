@@ -2,6 +2,9 @@
 // app.js — Rounds: Main Application Init
 // Boots the site, wires up global interactions.
 // ============================================================
+import { renderNav, renderFooter } from "./components.js";
+import { Router } from "./router.js";
+import { getAllArticles, formatDate } from "./data.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   // ── Inject nav and footer ──────────────────────────────────
@@ -89,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Bind nav logo and links
-function bindNavEvents() {
+export function bindNavEvents() {
   document.querySelectorAll('.nav-logo, .nav-link, .nav-mobile-link, .footer-link').forEach(el => {
     el.addEventListener('click', (e) => {
       e.preventDefault();

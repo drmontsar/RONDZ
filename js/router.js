@@ -113,9 +113,9 @@ const Router = {
 };
 
 // ── HOME PAGE LAYOUT ─────────────────────────────────────────
-function renderHomePage() {
-  const featured = getFeaturedArticle();
-  const allArticles = getAllArticles();
+export async function renderHomePage() {
+  const featured = await getFeaturedArticle();
+  const allArticles = await getAllArticles();
   const nonFeatured = allArticles.filter(a => a.id !== featured.id);
   const latest = nonFeatured.slice(0, 6);
 
