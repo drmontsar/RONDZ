@@ -46,7 +46,7 @@ export function renderNav(activePage = 'home') {
     <!-- Search Overlay -->
     <div class="search-bar" id="search-bar">
       <div class="search-bar-inner">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="search-input" class="search-input" placeholder="Search articles, topics, or authors..." autocomplete="off"/>
         <button class="search-close" id="search-close" aria-label="Close search">✕</button>
       </div>
@@ -101,11 +101,11 @@ export async function renderSidebar() {
       <h3 class="sidebar-heading">Trending</h3>
       <ol class="trending-list">
         ${sidebarList.map((a, i) => `
-          <li class="trending-item" data-article-id="${a.id}">
+          <li class="trending-item" data-article-id="${escapeHtml(a.id)}">
             <span class="trending-num">${String(i + 1).padStart(2, '0')}</span>
             <div class="trending-info">
-              <span class="trending-cat">${a.category}</span>
-              <h4 class="trending-title">${a.title}</h4>
+              <span class="trending-cat">${escapeHtml(a.category)}</span>
+              <h4 class="trending-title">${escapeHtml(a.title)}</h4>
             </div>
           </li>
         `).join('')}
@@ -183,17 +183,17 @@ export function renderNewsletterBanner() {
 // ── CARDS & COMPONENTS ───────────────────────────────────────
 export function renderArticleCard(article, isLarge = false) {
   return `
-  <article class="article-card ${isLarge ? 'article-card--large' : ''}" data-article-id="${article.id}">
+  <article class="article-card ${isLarge ? 'article-card--large' : ''}" data-article-id="${escapeHtml(article.id)}">
     <div class="article-image">
-      <img src="${article.image}" alt="${article.title}" loading="lazy" />
-      <span class="article-category-badge">${article.category}</span>
+      <img src="${escapeHtml(article.image)}" alt="${escapeHtml(article.title)}" loading="lazy" />
+      <span class="article-category-badge">${escapeHtml(article.category)}</span>
     </div>
     <div class="article-content">
-      <h3 class="article-title">${article.title}</h3>
-      <p class="article-summary">${article.summary}</p>
+      <h3 class="article-title">${escapeHtml(article.title)}</h3>
+      <p class="article-summary">${escapeHtml(article.summary)}</p>
       <div class="article-meta">
-        <span class="article-author">${article.author}</span>
-        <span class="article-date">${formatDate(article.date)} · ${article.readTime}</span>
+        <span class="article-author">${escapeHtml(article.author)}</span>
+        <span class="article-date">${formatDate(article.date)} · ${escapeHtml(article.readTime)}</span>
       </div>
     </div>
   </article>`;
@@ -212,17 +212,17 @@ export function renderInFeedAd() {
 export function renderHero(article) {
   if (!article) return '';
   return `
-  <section class="hero" style="background-image: linear-gradient(to top, rgba(14,23,38,1) 0%, rgba(14,23,38,0.2) 100%), url('${article.image}')">
+  <section class="hero" style="background-image: linear-gradient(to top, rgba(14,23,38,1) 0%, rgba(14,23,38,0.2) 100%), url('${escapeHtml(article.image)}')">
     <div class="hero-content">
-      <span class="hero-category">${article.category}</span>
-      <h1 class="hero-title">${article.title}</h1>
-      <p class="hero-summary">${article.summary}</p>
+      <span class="hero-category">${escapeHtml(article.category)}</span>
+      <h1 class="hero-title">${escapeHtml(article.title)}</h1>
+      <p class="hero-summary">${escapeHtml(article.summary)}</p>
       <div class="hero-meta">
-        <span>By ${article.author}</span>
+        <span>By ${escapeHtml(article.author)}</span>
         <span style="opacity:0.6;margin:0 0.5rem;">|</span>
         <span>${formatDate(article.date)}</span>
       </div>
-      <button class="hero-cta" data-article-id="${article.id}">Read Article →</button>
+      <button class="hero-cta" data-article-id="${escapeHtml(article.id)}">Read Article →</button>
     </div>
   </section>`;
 }
@@ -240,23 +240,23 @@ export async function renderArticleView(article) {
     
     <header class="article-header">
       <div class="article-header-inner">
-        <span class="article-category">${article.category}</span>
-        <h1 class="article-headline">${article.title}</h1>
-        <p class="article-deck">${article.summary}</p>
-        
+        <span class="article-category">${escapeHtml(article.category)}</span>
+        <h1 class="article-headline">${escapeHtml(article.title)}</h1>
+        <p class="article-deck">${escapeHtml(article.summary)}</p>
+
         <div class="article-author-block">
-          <div class="author-avatar">${article.author.charAt(0)}</div>
+          <div class="author-avatar">${escapeHtml(article.author.charAt(0))}</div>
           <div class="author-info">
-            <div class="author-name">${article.author}</div>
-            <div class="author-title">${article.authorTitle || 'Contributor'}</div>
-            <div class="author-date">${formatDate(article.date)} · ${article.readTime}</div>
+            <div class="author-name">${escapeHtml(article.author)}</div>
+            <div class="author-title">${escapeHtml(article.authorTitle || 'Contributor')}</div>
+            <div class="author-date">${formatDate(article.date)} · ${escapeHtml(article.readTime)}</div>
           </div>
         </div>
       </div>
     </header>
 
     <div class="article-hero-image">
-      <img src="${article.image}" alt="${article.title}" />
+      <img src="${escapeHtml(article.image)}" alt="${escapeHtml(article.title)}" />
     </div>
 
     <div class="article-layout">
@@ -342,6 +342,11 @@ export function renderAboutPage() {
 }
 
 // ── UTILITIES ────────────────────────────────────────────────
+const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+export function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => HTML_ESCAPES[c]);
+}
+
 export function formatDate(dateStr) {
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });

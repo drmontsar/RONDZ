@@ -2,7 +2,7 @@
 // app.js — Rounds: Main Application Init
 // Boots the site, wires up global interactions.
 // ============================================================
-import { renderNav, renderFooter } from "./components.js";
+import { renderNav, renderFooter, escapeHtml } from "./components.js";
 import { Router } from "./router.js";
 import { getAllArticles, formatDate } from "./data.js";
 
@@ -67,10 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       searchResults.innerHTML = matches.map(a => `
-        <div class="search-result-item" data-article-id="${a.id}">
-          <span class="search-result-cat">${a.category}</span>
-          <p class="search-result-title">${a.title}</p>
-          <span class="search-result-author">${a.author} · ${formatDate(a.date)}</span>
+        <div class="search-result-item" data-article-id="${escapeHtml(a.id)}">
+          <span class="search-result-cat">${escapeHtml(a.category)}</span>
+          <p class="search-result-title">${escapeHtml(a.title)}</p>
+          <span class="search-result-author">${escapeHtml(a.author)} · ${formatDate(a.date)}</span>
         </div>
       `).join('');
 
