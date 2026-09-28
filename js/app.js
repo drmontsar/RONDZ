@@ -50,10 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (searchInput) {
-    searchInput.addEventListener('input', () => {
+    searchInput.addEventListener('input', async () => {
       const q = searchInput.value.toLowerCase().trim();
       if (q.length < 2) { searchResults.innerHTML = ''; return; }
-      const matches = getAllArticles().filter(a =>
+      const articles = await getAllArticles();
+      const matches = articles.filter(a =>
         a.title.toLowerCase().includes(q) ||
         a.summary.toLowerCase().includes(q) ||
         a.category.toLowerCase().includes(q) ||

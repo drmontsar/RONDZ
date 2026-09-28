@@ -50,7 +50,7 @@ export function renderNav(activePage = 'home') {
         <input type="text" id="search-input" class="search-input" placeholder="Search articles, topics, or authors..." autocomplete="off"/>
         <button class="search-close" id="search-close" aria-label="Close search">✕</button>
       </div>
-      <div class="search-results" id="search-results"></div>
+      <div class="search-results" id="search-results" role="status" aria-live="polite"></div>
     </div>
   </nav>`;
 }

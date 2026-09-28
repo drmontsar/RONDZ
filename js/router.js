@@ -3,7 +3,7 @@
 // Handles all page transitions without a server.
 // ============================================================
 
-const Router = {
+export const Router = {
   currentPage: 'home',
   currentData: null,
 
@@ -17,32 +17,35 @@ const Router = {
   },
 
   // Render the current page into #app
-  render() {
+  async render() {
     const app = document.getElementById('app');
     if (!app) return;
 
+    app.setAttribute('aria-busy', 'true');
     let html = '';
 
     switch (this.currentPage) {
       case 'home':
-        html = renderHomePage();
+        html = await renderHomePage();
         break;
-      case 'article':
-        const article = getArticleById(this.currentData);
+      case 'article': {
+        const article = await getArticleById(this.currentData);
         if (!article) { html = '<p class="error-state">Article not found.</p>'; break; }
-        html = renderArticleView(article);
+        html = await renderArticleView(article);
         break;
+      }
       case 'category':
-        html = renderCategoryPage(this.currentData);
+        html = await renderCategoryPage(this.currentData);
         break;
       case 'about':
         html = renderAboutPage();
         break;
       default:
-        html = renderHomePage();
+        html = await renderHomePage();
     }
 
     app.innerHTML = html;
+    app.removeAttribute('aria-busy');
     this.bindLinks();
     this.bindArticleClicks();
   },

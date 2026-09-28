@@ -13,11 +13,13 @@
 </head>
 <body>
 
+  <a class="skip-link" href="#app">Skip to content</a>
+
   <!-- NAV (injected by app.js) -->
   <div id="nav-container"></div>
 
   <!-- PAGE CONTENT (rendered by router.js) -->
-  <main id="app"></main>
+  <main id="app" aria-live="polite"></main>
 
   <!-- FOOTER (injected by app.js) -->
   <div id="footer-container"></div>
@@ -28,7 +30,6 @@
   <script type="module" src="js/components.js"></script>
   <script type="module" src="js/router.js"></script>
   <script type="module" src="js/app.js"></script>
-  <script src="js/app.js"></script>
 
 </body>
 </html>

@@ -30,6 +30,20 @@
 
 html { scroll-behavior: smooth; }
 
+.skip-link {
+  position: absolute;
+  top: -40px; left: 0;
+  background: var(--teal);
+  color: var(--navy);
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+  z-index: 1000;
+  transition: top var(--transition);
+}
+.skip-link:focus { top: 0; }
+
+:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+
 body {
   font-family: var(--font-sans);
   background: var(--warm);
