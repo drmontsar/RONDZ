@@ -1,0 +1,13 @@
+{
+  "name": "rounds",
+  "private": true,
+  "packageManager": "pnpm@12.5.1",
+  "scripts": {
+    "dev": "pnpm run ui",
+    "ui": "pnpm run docs:prepare && python3 scripts/serve.py",
+    "docs:prepare": "cp node_modules/swagger-ui-dist/swagger-ui.css node_modules/swagger-ui-dist/swagger-ui-bundle.js docs/"
+  },
+  "devDependencies": {
+    "swagger-ui-dist": "5.33.0"
+  }
+}

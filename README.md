@@ -6,28 +6,26 @@ Rounds is an independent technology journalism platform crafted for physicians, 
 - **Frontend**: Vanilla JavaScript (ES6), HTML5, CSS3.
 - **Routing**: Client-side hashless routing handled internally by `js/router.js`.
 - **Database**: Local Storage (fully client-side data persistence for articles and settings).
-- **No Build Tools**: Runs straight from the browser. No Node, no Webpack, no dependencies.
+- **Local docs tooling**: The site runs without a build step; pnpm installs the Swagger UI assets for its docs page.
 
 ## Setup Instructions
 
-Since this application contains zero external dependencies and runs purely on the DOM, there is no installation or build process required. 
+The site needs no build step. Install the local documentation assets once:
 
 1. Clone or download this repository.
 2. Open your terminal and navigate to the root folder:
    ```bash
    cd path/to/ROUNDS
    ```
-3. Start any local web server to serve the static files:
-   - **Using Python:**
-     ```bash
-     python3 -m http.server 8000
-     ```
-   - **Using Node (npx):**
-     ```bash
-     npx serve .
-     ```
-   - *Alternative: Modern editors like VS Code have a "Live Server" extension you can start by right-clicking `index.html`.*
-4. Open your browser to `http://localhost:8000` (or whichever port your server booted).
+3. Start the static UI:
+   ```bash
+   corepack enable
+   pnpm install --frozen-lockfile
+   pnpm run ui
+   ```
+4. Open `http://localhost:4400`.
+
+ROUNDS serves its own Swagger UI at `http://localhost:4400/docs/` and live generated OpenAPI JSON at `/docs/openapi.json`. Start the platform server on port 8080 as well; the local static server proxies its specification. ROUNDS has no HTTP API of its own.
 
 *(Note: the local web server is strictly required so that CORS policies allow the browser to parse `localStorage` properly and render the subpages).*
 
@@ -38,7 +36,7 @@ The user facing site is simple. Users can paginate through clinical articles abo
 
 ### 2. The Admin Panel (`admin.html`)
 To access the admin portal:
-- Navigate to `http://localhost:8000/admin.html`
+- Navigate to `http://localhost:4400/admin.html`
 - **Default Password:** `offLabel1` (defined at the top of `js/admin.js`)
 
 #### Admin Features:
