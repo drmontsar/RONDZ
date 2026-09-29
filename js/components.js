@@ -3,6 +3,7 @@
 // Each function returns an HTML string or DOM element.
 // ============================================================
 import { getFeaturedArticle, getAllArticles, getArticlesByCategory, CATEGORIES } from "./data.js";
+import DOMPurify from "./vendor/purify.es.mjs";
 
 // ── NAV ─────────────────────────────────────────────────────
 export function renderNav(activePage = 'home') {
@@ -261,7 +262,7 @@ export async function renderArticleView(article) {
 
     <div class="article-layout">
       <main class="article-body">
-        ${article.body}
+        ${DOMPurify.sanitize(article.body)}
         
         <div class="article-footer">
           <div class="share-links">

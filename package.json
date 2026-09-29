@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "swagger-ui-dist": "5.33.0"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.16"
   }
 }
