@@ -4,6 +4,7 @@
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 import { collection, doc, setDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 import { getAllArticles } from "./data.js";
+import DOMPurify from "./vendor/purify.es.mjs";
 
 // ── AUTH ─────────────────────────────────────────────────────
 function initAuth() {
@@ -30,20 +31,12 @@ function initAuth() {
 
   loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('login-email')?.value || "admin@rounds.local"; // Fallback identifier
+    const email = document.getElementById('login-email')?.value;
     const pw = document.getElementById('login-password').value;
 
     loginError.style.display = 'none';
 
     try {
-      if (email === "admin@rounds.local" && pw === "offLabel1" && !window.auth.currentUser) {
-        // Mock login if Firebase not configured yet to allow local testing
-        loginScreen.style.display = 'none';
-        adminApp.style.display = 'flex';
-        initAdminApp();
-        return;
-      }
-
       await signInWithEmailAndPassword(window.auth, email, pw);
     } catch (error) {
       loginError.style.display = 'block';
@@ -52,8 +45,7 @@ function initAuth() {
   });
 
   document.getElementById('btn-logout')?.addEventListener('click', () => {
-    if (window.auth.currentUser) signOut(window.auth);
-    else location.reload(); // Fallback for mock login
+    signOut(window.auth);
   });
 }
 
@@ -193,7 +185,7 @@ function populateForm(article) {
   document.getElementById('form-summary').value = article.summary || '';
   document.getElementById('form-image').value = article.image || '';
   document.getElementById('form-featured').checked = article.featured || false;
-  document.getElementById('editor-content').innerHTML = article.body || '';
+  document.getElementById('editor-content').innerHTML = DOMPurify.sanitize(article.body || '');
   document.getElementById('form-submit-btn').textContent = 'Update Article';
   const deleteBtn = document.getElementById('btn-delete-article');
   if (deleteBtn) deleteBtn.style.display = 'inline-block';

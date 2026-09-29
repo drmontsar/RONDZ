@@ -37,7 +37,7 @@ The user facing site is simple. Users can paginate through clinical articles abo
 ### 2. The Admin Panel (`admin.html`)
 To access the admin portal:
 - Navigate to `http://localhost:4400/admin.html`
-- **Default Password:** `offLabel1` (defined at the top of `js/admin.js`)
+- Sign in with a Firebase Authentication user (email/password) created in the Firebase Console for your project. Set real values in `js/firebase-config.js` first — the panel refuses to authenticate against the placeholder config.
 
 #### Admin Features:
 - **Write Articles:** Access a rich text editor where you can input titles, authors, categories, and cover images (from local system or URL). 
