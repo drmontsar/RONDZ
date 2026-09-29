@@ -6,7 +6,10 @@ import { renderNav, renderFooter, escapeHtml } from "./components.js";
 import { Router } from "./router.js";
 import { getAllArticles, formatDate } from "./data.js";
 
-document.addEventListener('DOMContentLoaded', () => {
+// data.js (imported above) has a top-level `await import(...)`, so this
+// module can finish evaluating after DOMContentLoaded already fired — run
+// immediately if the document is already past 'loading', else wait as normal.
+function initApp() {
   // ── Inject nav and footer ──────────────────────────────────
   document.getElementById('nav-container').innerHTML = renderNav();
   document.getElementById('footer-container').innerHTML = renderFooter();
@@ -90,7 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const nav = document.getElementById('main-nav');
     if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
   });
-});
+}
+if (document.readyState !== 'loading') initApp();
+else document.addEventListener('DOMContentLoaded', initApp);
 
 // Bind nav logo and links
 export function bindNavEvents() {

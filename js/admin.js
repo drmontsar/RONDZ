@@ -456,8 +456,12 @@ function initAdminApp() {
   showPage('articles');
 }
 
-// Bind auth listener on load
-document.addEventListener('DOMContentLoaded', () => {
+// Bind auth listener on load.
+// Top-level `await import(...)` above means this module finishes evaluating
+// after DOMContentLoaded may already have fired, so a plain addEventListener
+// here can miss the event entirely — run immediately if the document is
+// already past 'loading', else wait for the event as normal.
+function initAdmin() {
   // modify html to add an email input field for Firebase
   const loginForm = document.getElementById('login-form');
   if (loginForm && !document.getElementById('login-email')) {
@@ -474,4 +478,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initAuth();
-});
+}
+if (document.readyState !== 'loading') initAdmin();
+else document.addEventListener('DOMContentLoaded', initAdmin);
