@@ -1,7 +1,13 @@
 // ============================================================
 // data.js — Rounds: Article & Author Data via Firestore
 // ============================================================
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+// On localhost/127.0.0.1 reads use a localStorage-backed stand-in
+// (js/local-firestore.js) instead of real Firestore, so local dev
+// never needs a Firebase project. See README "Local setup".
+const isLocalHost = ['localhost', '127.0.0.1'].includes(location.hostname);
+const { collection, getDocs } = isLocalHost
+  ? await import('./local-firestore.js')
+  : await import('https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js');
 
 const CATEGORIES = [
   "AI & Diagnostics",
@@ -32,18 +38,20 @@ let _articlesCache = null;
 export async function getAllArticles() {
   if (_articlesCache) return _articlesCache;
 
-  // Return fallback data if firebase isn't configured (no db object)
-  if (!window.db) {
+  // Return fallback data if firebase isn't configured (no db object) and we're not
+  // using the local store either
+  if (!isLocalHost && !window.db) {
     console.warn("Firebase not configured. Serving local fallback data.");
     return SEED_ARTICLES;
   }
 
   try {
-    const articlesCol = collection(window.db, 'articles');
+    const dbRef = isLocalHost ? {} : window.db;
+    const articlesCol = collection(dbRef, 'articles');
     const articleSnapshot = await getDocs(articlesCol);
 
     // Check deleted seeds to filter them out
-    const deletedSeedsCol = collection(window.db, 'deletedSeeds');
+    const deletedSeedsCol = collection(dbRef, 'deletedSeeds');
     const deletedSnapshot = await getDocs(deletedSeedsCol);
     const deletedIds = deletedSnapshot.docs.map(doc => doc.id);
 

@@ -1,20 +1,41 @@
 // ============================================================
 // admin.js — Rounds Admin Panel via Firebase
 // ============================================================
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-import { collection, doc, setDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 import { getAllArticles } from "./data.js";
 import DOMPurify from "./vendor/purify.es.mjs";
 
+// On localhost/127.0.0.1 the admin panel signs itself in as a local admin and
+// writes to a localStorage-backed store instead — no Firebase auth or project
+// needed for local dev. Any other host still requires real Firebase sign-in.
+// See README "Local setup".
+const isLocalHost = ['localhost', '127.0.0.1'].includes(location.hostname);
+const dbRef = isLocalHost ? {} : window.db;
+
+const { collection, doc, setDoc, deleteDoc, getDocs, writeBatch } = isLocalHost
+  ? await import('./local-firestore.js')
+  : await import('https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js');
+const { signInWithEmailAndPassword, signOut, onAuthStateChanged } = isLocalHost
+  ? {}
+  : await import('https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js');
+
 // ── AUTH ─────────────────────────────────────────────────────
 function initAuth() {
+  const loginScreen = document.getElementById('login-screen');
+  const adminApp = document.getElementById('admin-app');
+
+  if (isLocalHost) {
+    loginScreen.style.display = 'none';
+    adminApp.style.display = 'flex';
+    showToast('Local dev mode: signed in as local admin (no Firebase auth).');
+    initAdminApp();
+    return;
+  }
+
   if (!window.auth) {
     showToast("Firebase must be configured first.", true);
     return;
   }
 
-  const loginScreen = document.getElementById('login-screen');
-  const adminApp = document.getElementById('admin-app');
   const loginForm = document.getElementById('login-form');
   const loginError = document.getElementById('login-error');
 
@@ -123,9 +144,9 @@ window.deleteArticle = async function (id, fromForm = false) {
 
   try {
     if (id.startsWith('seed-')) {
-      await setDoc(doc(window.db, "deletedSeeds", id), { id: id });
+      await setDoc(doc(dbRef, "deletedSeeds", id), { id: id });
     } else {
-      await deleteDoc(doc(window.db, "articles", id));
+      await deleteDoc(doc(dbRef, "articles", id));
     }
 
     showToast('Article deleted.');
@@ -146,14 +167,14 @@ window.toggleFeatured = async function (id, currentStatus) {
     // If making this one featured, unfeature all others first via batch
     if (!currentStatus) {
       const all = await getAllArticles();
-      const batch = writeBatch(window.db);
+      const batch = writeBatch(dbRef);
       all.filter(a => a.featured && !a.id.startsWith('seed-')).forEach(a => {
-        batch.update(doc(window.db, "articles", a.id), { featured: false });
+        batch.update(doc(dbRef, "articles", a.id), { featured: false });
       });
       await batch.commit();
     }
 
-    await setDoc(doc(window.db, "articles", id), { featured: !currentStatus }, { merge: true });
+    await setDoc(doc(dbRef, "articles", id), { featured: !currentStatus }, { merge: true });
 
     showToast('Featured status updated.');
     window.clearCache();
@@ -236,14 +257,14 @@ async function handleFormSubmit(e) {
   try {
     if (isFeatured) {
       const all = await getAllArticles();
-      const batch = writeBatch(window.db);
+      const batch = writeBatch(dbRef);
       all.filter(a => a.featured && !a.id.startsWith('seed-')).forEach(a => {
-        batch.update(doc(window.db, "articles", a.id), { featured: false });
+        batch.update(doc(dbRef, "articles", a.id), { featured: false });
       });
       await batch.commit();
     }
 
-    await setDoc(doc(window.db, "articles", id), article);
+    await setDoc(doc(dbRef, "articles", id), article);
 
     showToast(editingId ? 'Article updated successfully!' : 'Article published successfully!');
     document.getElementById('form-success').classList.add('visible');
@@ -342,8 +363,8 @@ function handlePasswordChange(e) {
 
 async function exportEmails() {
   try {
-    if (!window.db) throw new Error();
-    const snap = await getDocs(collection(window.db, 'subscribers'));
+    if (!isLocalHost && !window.db) throw new Error();
+    const snap = await getDocs(collection(dbRef, 'subscribers'));
     const emails = snap.docs.map(d => d.data().email);
 
     if (emails.length === 0) { showToast('No emails collected yet.', true); return; }
@@ -362,17 +383,17 @@ async function handleHardReset() {
   if (confirm('Delete ALL user-created articles? Seed articles will be restored.')) {
     try {
       const all = await getAllArticles();
-      const batch = writeBatch(window.db);
+      const batch = writeBatch(dbRef);
 
       // Delete user articles
       all.filter(a => !a.id.startsWith('seed-')).forEach(a => {
-        batch.delete(doc(window.db, "articles", a.id));
+        batch.delete(doc(dbRef, "articles", a.id));
       });
 
       // Clear deleted seeds
-      const delSnap = await getDocs(collection(window.db, "deletedSeeds"));
+      const delSnap = await getDocs(collection(dbRef, "deletedSeeds"));
       delSnap.docs.forEach(d => {
-        batch.delete(doc(window.db, "deletedSeeds", d.id));
+        batch.delete(doc(dbRef, "deletedSeeds", d.id));
       });
 
       await batch.commit();

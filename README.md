@@ -35,9 +35,10 @@ ROUNDS serves its own Swagger UI at `http://localhost:4400/docs/` and live gener
 The user facing site is simple. Users can paginate through clinical articles about technology. All routing is tracked without causing page reloads via `router.js`.
 
 ### 2. The Admin Panel (`admin.html`)
-To access the admin portal:
-- Navigate to `http://localhost:4400/admin.html`
-- Sign in with a Firebase Authentication user (email/password) created in the Firebase Console for your project. Set real values in `js/firebase-config.js` first — the panel refuses to authenticate against the placeholder config.
+
+**Local setup:** navigate to `http://localhost:4400/admin.html` — on `localhost`/`127.0.0.1` the panel signs you in automatically as a local admin, no Firebase project or login required. Reads and writes go to a `localStorage`-backed store (`js/local-firestore.js`), not real Firestore, so local edits never touch production data. This bypass is keyed on `location.hostname` in `js/admin.js`/`js/data.js` and cannot trigger on any other host.
+
+**Production:** any host other than `localhost`/`127.0.0.1` requires signing in with a real Firebase Authentication user (email/password) created in the Firebase Console for your project, and real values in `js/firebase-config.js` — the panel refuses to authenticate against the placeholder config.
 
 #### Admin Features:
 - **Write Articles:** Access a rich text editor where you can input titles, authors, categories, and cover images (from local system or URL). 
